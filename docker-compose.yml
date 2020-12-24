@@ -1,0 +1,29 @@
+version: "3.7"
+
+volumes:
+  mssql-data:
+    driver: local-persist
+    driver_opts:
+      mountpoint: ${CONTAINERVOLUMES}/mssql
+
+services:
+  db:
+    container_name: ${COMPOSE_PROJECT_NAME}-2017
+    image: mcr.microsoft.com/mssql/server:2017-GA-ubuntu
+    user: root
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: ${MSSQL_ROOT_PASSWORD}
+      # "Developer" or "Express" or "Standard"
+      MSSQL_PID: Developer
+      MSSQL_LCID: 1031
+      MSSQL_COLLATION: Latin1_General_CI_AS
+      TZ: Europe/Berlin
+      MSSQL_BACKUP_DIR: /var/opt/mssql/backup
+      MSSQL_DATA_DIR: /var/opt/mssql/data
+      MSSQL_LOG_DIR: /var/opt/mssql/log
+    ports:
+      - 1433:1433
+      - 49200:1433
+    volumes:
+      - mssql-data:/var/opt/mssql
