@@ -5,10 +5,14 @@ volumes:
     driver: local-persist
     driver_opts:
       mountpoint: ${CONTAINERVOLUMES}/mssql
+  mssql-backup:
+    driver: local-persist
+    driver_opts:
+      mountpoint: ${CONTAINERVOLUMES}/backup
 
 services:
   db:
-    container_name: ${COMPOSE_PROJECT_NAME}-2017
+    container_name: JTL-${COMPOSE_PROJECT_NAME}-2017
     image: mcr.microsoft.com/mssql/server:2017-GA-ubuntu
     user: root
     environment:
@@ -19,7 +23,6 @@ services:
       MSSQL_LCID: 1031
       MSSQL_COLLATION: Latin1_General_CI_AS
       TZ: Europe/Berlin
-      MSSQL_BACKUP_DIR: /var/opt/mssql/backup
       MSSQL_DATA_DIR: /var/opt/mssql/data
       MSSQL_LOG_DIR: /var/opt/mssql/log
     ports:
@@ -27,3 +30,21 @@ services:
       - 49200:1433
     volumes:
       - mssql-data:/var/opt/mssql
+      - mssql-backup:/backup
+
+  backup:
+    container_name: JTL-${COMPOSE_PROJECT_NAME}-Backup
+    image: bbtsoftwareag/mssql-backup
+    # for using the cleanup feature, use the backup volume from db.
+    volumes:
+      - mssql-backup:/backup
+    environment:
+      TZ: Europe/Berlin
+      DB_SERVER: db
+      DB_USER: SA
+      DB_PASSWORD: ${MSSQL_ROOT_PASSWORD}
+      DB_NAMES: eazybusiness
+      BACKUP_AGE: 2
+      CRON_SCHEDULE: 59 05,11,18 * * *
+    networks:
+      - default
